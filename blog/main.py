@@ -29,6 +29,9 @@ def create(request:schemas.Blog, db: Session = Depends(get_db)):
 @app.get('/blog', status_code=status.HTTP_200_OK)
 def all(db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
+    if not blogs:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, 
+            detail = f"No blogs currently exist")
     return blogs
 
 # Return blog by id
@@ -41,3 +44,12 @@ def show_by_id(id, db: Session = Depends(get_db)):
 #        response.status_code = status.HTTP_404_NOT_FOUND
 #        return {'detail': f"blog with id {id} does not exist"}
     return blog_by_id
+
+@app.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete(id, db: Session = Depends(get_db)):
+    if not db.query(models.Blog).filter(models.Blog.id == id).first():
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, 
+                    detail = f"blog with id {id} does not exist")
+    db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
+    db.commit()
+    return {'response' : 'Blog with id {id} deleted'}
