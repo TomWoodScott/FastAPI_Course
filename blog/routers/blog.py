@@ -3,12 +3,15 @@ from ..import schemas, database, models
 from typing import List
 from sqlalchemy.orm import Session
 
-router = APIRouter()
+router = APIRouter(
+    tags=['Blog'],
+    prefix="/blog"
+)
 
 get_db = database.get_db
 
 # Return all blogs,
-@router.get('/blog', status_code=status.HTTP_200_OK, response_model=List[schemas.ShowBlog], tags=["blogs"])
+@router.get('/', status_code=status.HTTP_200_OK, response_model=List[schemas.ShowBlog])
 def show_all(db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
     if not blogs:
@@ -18,7 +21,7 @@ def show_all(db: Session = Depends(get_db)):
 
 
 # Create blog
-@router.post('/blog', status_code=status.HTTP_201_CREATED, tags=["blogs"])
+@router.post('/', status_code=status.HTTP_201_CREATED)
 def create(request:schemas.Blog, db: Session = Depends(get_db)):
     new_blog = models.Blog(title=request.title, body=request.body)
     db.add(new_blog)
@@ -28,7 +31,7 @@ def create(request:schemas.Blog, db: Session = Depends(get_db)):
 
 
 # Return blog by id
-@router.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=schemas.ShowBlog, tags=["blogs"])
+@router.get('/{id}', status_code=status.HTTP_200_OK, response_model=schemas.ShowBlog)
 def show_by_id(id, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     if not blog:
@@ -37,7 +40,7 @@ def show_by_id(id, db: Session = Depends(get_db)):
     return blog
 
 # Delete blog by id
-@router.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT, tags=["blogs"])
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete(id, db: Session = Depends(get_db)):
 
     blog = db.query(models.Blog).filter(models.Blog.id == id)
@@ -50,7 +53,7 @@ def delete(id, db: Session = Depends(get_db)):
 
 
 # Update blog by id
-@router.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED, tags=["blogs"])
+@router.put('/{id}', status_code=status.HTTP_202_ACCEPTED)
 def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
 
     blog = db.query(models.Blog).filter(models.Blog.id == id)
