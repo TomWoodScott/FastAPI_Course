@@ -13,3 +13,11 @@ SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 # create mapping
 Base = declarative_base()
+
+# Get database
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
