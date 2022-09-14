@@ -7,6 +7,8 @@ from typing import List
 
 app = FastAPI()
 
+
+# Create all tables
 models.Base.metadata.create_all(engine)
 
 def get_db():
@@ -17,7 +19,7 @@ def get_db():
         db.close()
 
 # Create a blog, add it to the database
-@app.post('/blog', status_code=status.HTTP_201_CREATED)
+@app.post('/blog', status_code=status.HTTP_201_CREATED, tags=["blogs"])
 def create(request:schemas.Blog, db: Session = Depends(get_db)):
     new_blog = models.Blog(title=request.title, body=request.body)
     db.add(new_blog)
@@ -27,7 +29,7 @@ def create(request:schemas.Blog, db: Session = Depends(get_db)):
 
 
 # Return all blogs,  
-@app.get('/blog', status_code=status.HTTP_200_OK, response_model=List[schemas.ShowBlog])
+@app.get('/blog', status_code=status.HTTP_200_OK, response_model=List[schemas.ShowBlog], tags=["blogs"])
 def show_all(db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
     if not blogs:
@@ -37,7 +39,7 @@ def show_all(db: Session = Depends(get_db)):
 
 
 # Return blog by id
-@app.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=schemas.ShowBlog)
+@app.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=schemas.ShowBlog, tags=["blogs"])
 def show_by_id(id, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     if not blog:
@@ -48,7 +50,7 @@ def show_by_id(id, db: Session = Depends(get_db)):
     return blog
 
 # Delete blog by id
-@app.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT)
+@app.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT, tags=["blogs"])
 def delete(id, db: Session = Depends(get_db)):
    
     blog = db.query(models.Blog).filter(models.Blog.id == id)
@@ -61,7 +63,7 @@ def delete(id, db: Session = Depends(get_db)):
 
 
 # Update 
-@app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED)
+@app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED, tags=["blogs"])
 def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
    
     blog = db.query(models.Blog).filter(models.Blog.id == id)
@@ -73,10 +75,17 @@ def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
     return 'Updated successfully'
 
 
-@app.post('/user')
+@app.post('/user', tags=["User"])
 def create_user(request: schemas.User, db: Session = Depends(get_db)):
-    new_user = models.User(request)
+    new_user = models.User(name=request.name, email=request.email, password=request.password)
     db.add(new_user)
     db.commit()
-    db.refresh()
-    return request
+    db.refresh(new_user)
+    return new_user
+
+@app.get('/user/{id}', tags=["User"])
+def delete_user(id:int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} not found")
+    return user
